@@ -57,7 +57,7 @@ pub const DirectAllocator = struct {
         }
     }
 
-    fn alloc(allocator: *Allocator, n: usize, alignment: u29) error{OutOfMemory}![]u8 {
+    fn alloc(allocator: *Allocator, n: usize, alignment: u29) os.PosixMmapError![]u8 {
         const self = @fieldParentPtr(DirectAllocator, "allocator", allocator);
         if (n == 0)
             return (([*]u8)(undefined))[0..0];
@@ -67,7 +67,7 @@ pub const DirectAllocator = struct {
                 const p = os.posix;
                 const alloc_size = if (alignment <= os.page_size) n else n + alignment;
                 const addr = p.mmap(null, alloc_size, p.PROT_READ | p.PROT_WRITE, p.MAP_PRIVATE | p.MAP_ANONYMOUS, -1, 0);
-                if (addr == p.MAP_FAILED) return error.OutOfMemory;
+                if (addr == p.MAP_FAILED) return os.getPosixMapError(@intCast(i32, addr));
                 if (alloc_size == n) return @intToPtr([*]u8, addr)[0..n];
 
                 const aligned_addr = mem.alignForward(addr, alignment);

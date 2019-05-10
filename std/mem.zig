@@ -9,7 +9,7 @@ const trait = meta.trait;
 const testing = std.testing;
 
 pub const Allocator = struct {
-    pub const Error = error{OutOfMemory};
+    pub const Error = std.os.PosixMmapError;
 
     /// Realloc is used to modify the size or alignment of an existing allocation,
     /// as well as to provide the allocator with an opportunity to move an allocation

@@ -509,6 +509,40 @@ pub const PosixOpenError = error{
     Unexpected,
 };
 
+//maybe create a unified error for all posix errors?
+pub const PosixMmapError = error {
+    EACCES,
+    EAGAIN,
+    EBADF,
+    EEXIST,
+    EINVAL,
+    ENFILE,
+    ENODEV,
+    ENOMEM,
+    EOVERFLOW,
+    EPERM,
+    ETXTBSY,
+    OutOfMemory,
+    Unexpected,
+};
+
+pub fn getPosixMapError(err_no: i32) PosixMmapError{
+    switch(err_no){
+        posix.EACCES => return PosixMmapError.EACCES,
+        posix.EAGAIN => return PosixMmapError.EAGAIN,
+        posix.EBADF => return PosixMmapError.EBADF,
+        posix.EINVAL => return PosixMmapError.EINVAL,
+        posix.ENFILE => return PosixMmapError.ENFILE,
+        posix.EEXIST => return PosixMmapError.EEXIST,
+        posix.ENODEV => return PosixMmapError.ENODEV,
+        posix.ENOMEM => return PosixMmapError.ENOMEM,
+        posix.EOVERFLOW => return PosixMmapError.EOVERFLOW,
+        posix.ETXTBSY => return PosixMmapError.ETXTBSY,
+        posix.EPERM => return PosixMmapError.EPERM,
+        else => return PosixMmapError.Unexpected,
+    }
+}
+
 /// ::file_path needs to be copied in memory to add a null terminating byte.
 /// Calls POSIX open, keeps trying if it gets interrupted, and translates
 /// the return value into zig errors.
@@ -846,7 +880,7 @@ pub const GetEnvVarOwnedError = error{
 
     /// See https://github.com/ziglang/zig/issues/1774
     InvalidUtf8,
-};
+} || PosixMmapError;
 
 /// Caller must free returned memory.
 /// TODO make this go through libc when we have it
@@ -2032,7 +2066,7 @@ pub const ArgIteratorWindows = struct {
     quote_count: usize,
     seen_quote_count: usize,
 
-    pub const NextError = error{OutOfMemory};
+    pub const NextError = std.os.PosixMmapError || PosixMmapError;
 
     pub fn init() ArgIteratorWindows {
         return initWithCmdLine(windows.GetCommandLineA());
@@ -3343,7 +3377,7 @@ pub const CpuCountError = error{
 
     /// See https://github.com/ziglang/zig/issues/1396
     Unexpected,
-};
+} || PosixMmapError;
 
 pub fn cpuCount(fallback_allocator: *mem.Allocator) CpuCountError!usize {
     switch (builtin.os) {
